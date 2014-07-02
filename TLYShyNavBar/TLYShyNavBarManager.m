@@ -151,6 +151,10 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)_handleScrolling
 {
+    if([self isFrozen]) {
+        return;
+    }
+    
     if (!isnan(self.previousYOffset))
     {
         // 1 - Calculate the delta

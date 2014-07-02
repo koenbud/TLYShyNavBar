@@ -46,6 +46,10 @@
 @property (nonatomic) CGFloat expansionResistance;      // default 200
 @property (nonatomic) CGFloat contractionResistance;    // default 0
 
+/* Temporary freeze the navbar
+ */
+@property (nonatomic, getter = isFrozen, setter = setFrozen:) BOOL frozen;
+
 - (void)setExtensionView:(UIView *)view;
 
 @end
