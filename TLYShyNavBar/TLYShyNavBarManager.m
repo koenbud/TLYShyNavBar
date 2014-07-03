@@ -160,9 +160,17 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)_handleScrolling
 {
+    if (!self.scrollView.window){
+        return;
+    }
+    
+    if (self.scrollView.contentSize.height <= self.scrollView.frame.size.height) {
+        return;
+    }
+    
     if (!self.isViewControllerVisible)
     {
-        return;
+        //return;
     }
     
     if (!isnan(self.previousYOffset))
@@ -222,9 +230,17 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)_handleScrollingEnded
 {
+    if (!self.scrollView.window){
+        return;
+    }
+    
+    if (self.scrollView.contentSize.height <= self.scrollView.frame.size.height) {
+        return;
+    }
+    
     if (!self.isViewControllerVisible)
     {
-        return;
+        //return;
     }
     
     self.resistanceConsumed = 0;
