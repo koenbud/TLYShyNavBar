@@ -45,4 +45,18 @@
     self.scrollView.contentSize = self.imageView.bounds.size;
 }
 
+- (IBAction)changeContentInset:(id)sender {
+    
+    //[self.shyNavBarManager setFrozen:![self.shyNavBarManager isFrozen]];
+
+    [self.shyNavBarManager setFrozen:YES];
+    
+    CGPoint contentOffset = self.scrollView.contentOffset;
+    contentOffset.y += 40;
+    self.scrollView.contentOffset = contentOffset;
+    
+    [self.shyNavBarManager setFrozen:NO];
+    
+}
+
 @end

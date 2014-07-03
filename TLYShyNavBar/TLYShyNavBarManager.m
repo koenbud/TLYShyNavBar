@@ -37,10 +37,12 @@ static inline CGFloat AACStatusBarHeight()
 
 @property (nonatomic, strong) UIView *extensionViewContainer;
 
+@property (nonatomic) UIEdgeInsets previousScrollInsets;
 @property (nonatomic) CGFloat previousYOffset;
 @property (nonatomic) CGFloat resistanceConsumed;
 
 @property (nonatomic, getter = isContracting) BOOL contracting;
+@property (nonatomic, getter = isViewControllerVisible) BOOL viewControllerVisible;
 @property (nonatomic) BOOL previousContractionState;
 
 @property (nonatomic) NSInteger scrollCount;
@@ -65,6 +67,7 @@ static inline CGFloat AACStatusBarHeight()
         self.expansionResistance = 200.f;
         self.contractionResistance = 0.f;
         
+        self.previousScrollInsets = UIEdgeInsetsZero;
         self.previousYOffset = NAN;
         
         self.navBarController = [[TLYShyViewController alloc] init];
@@ -157,6 +160,11 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)_handleScrolling
 {
+    if (!self.isViewControllerVisible)
+    {
+        return;
+    }
+    
     if (!isnan(self.previousYOffset))
     {
         // 1 - Calculate the delta
@@ -214,6 +222,11 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)_handleScrollingEnded
 {
+    if (!self.isViewControllerVisible)
+    {
+        return;
+    }
+    
     self.resistanceConsumed = 0;
     
     CGFloat deltaY = deltaY = [self.navBarController snap:self.isContracting];
@@ -253,8 +266,8 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)prepareForDisplay
 {
-    [self.navBarController expand];
-    self.previousYOffset = NAN;
+    [self cleanup];
+    self.viewControllerVisible = YES;
 }
 
 - (void)layoutViews
@@ -263,12 +276,19 @@ static inline CGFloat AACStatusBarHeight()
         return;
     }
     
-    [self.navBarController expand];
-    [self.extensionViewContainer.superview bringSubviewToFront:self.extensionViewContainer];
-    
     UIEdgeInsets scrollInsets = self.scrollView.contentInset;
     scrollInsets.top = CGRectGetHeight(self.extensionViewContainer.bounds) + self.viewController.tly_topLayoutGuide.length;
     
+    if (UIEdgeInsetsEqualToEdgeInsets(scrollInsets, self.previousScrollInsets))
+    {
+        return;
+    }
+    
+    self.previousScrollInsets = scrollInsets;
+    
+    [self.navBarController expand];
+    [self.extensionViewContainer.superview bringSubviewToFront:self.extensionViewContainer];
+
     self.scrollView.contentInset = scrollInsets;
     self.scrollView.scrollIndicatorInsets = scrollInsets;
 }
@@ -276,7 +296,10 @@ static inline CGFloat AACStatusBarHeight()
 - (void)cleanup
 {
     [self.navBarController expand];
+    
+    self.viewControllerVisible = NO;
     self.previousYOffset = NAN;
+    self.previousScrollInsets = UIEdgeInsetsZero;
 }
 
 #pragma mark - UIScrollViewDelegate methods
