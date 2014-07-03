@@ -43,6 +43,9 @@ static inline CGFloat AACStatusBarHeight()
 @property (nonatomic, getter = isContracting) BOOL contracting;
 @property (nonatomic) BOOL previousContractionState;
 
+@property (nonatomic) NSInteger scrollCount;
+@property (nonatomic) BOOL decelerating;
+
 @end
 
 @implementation TLYShyNavBarManager
@@ -140,7 +143,10 @@ static inline CGFloat AACStatusBarHeight()
     {
         self.delegateProxy.originalDelegate = _scrollView.delegate;
         _scrollView.delegate = (id)self.delegateProxy;
-    }}
+    }
+    
+    [_scrollView.panGestureRecognizer addTarget:self action:@selector(gestureRecognizerUpdate:)];
+}
 
 - (CGRect)extensionViewBounds
 {
@@ -151,15 +157,11 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)_handleScrolling
 {
-    if([self isFrozen]) {
-        return;
-    }
-    
     if (!isnan(self.previousYOffset))
     {
         // 1 - Calculate the delta
         CGFloat deltaY = (self.previousYOffset - self.scrollView.contentOffset.y);
-
+        
         // 2 - Ignore any scrollOffset beyond the bounds
         CGFloat start = -self.scrollView.contentInset.top;
         if (self.previousYOffset < start)
@@ -186,13 +188,13 @@ static inline CGFloat AACStatusBarHeight()
             self.previousContractionState = self.isContracting;
             self.resistanceConsumed = 0;
         }
-
+        
         // 5 - Apply resistance
         if (self.isContracting)
         {
             CGFloat availableResistance = self.contractionResistance - self.resistanceConsumed;
             self.resistanceConsumed = MIN(self.contractionResistance, self.resistanceConsumed - deltaY);
-
+            
             deltaY = MIN(0, availableResistance + deltaY);
         }
         else if (self.scrollView.contentOffset.y > -AACStatusBarHeight())
@@ -257,13 +259,13 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)layoutViews
 {
-    if([self isFrozen]) {
+    if(self.scrollCount == 1) {
         return;
     }
     
     [self.navBarController expand];
     [self.extensionViewContainer.superview bringSubviewToFront:self.extensionViewContainer];
-        
+    
     UIEdgeInsets scrollInsets = self.scrollView.contentInset;
     scrollInsets.top = CGRectGetHeight(self.extensionViewContainer.bounds) + self.viewController.tly_topLayoutGuide.length;
     
@@ -281,20 +283,42 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    [self _handleScrolling];
+    if(self.decelerating) {
+        [self _handleScrolling];
+    }
+    
+    if(self.scrollView.contentOffset.y <= 0) {
+        [self _handleScrolling];
+    }
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-    if (!decelerate)
-    {
-        [self _handleScrollingEnded];
-    }
+    self.decelerating = decelerate;
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-    [self _handleScrollingEnded];
+    self.decelerating = NO;
+}
+
+-(void)gestureRecognizerUpdate:(UIPanGestureRecognizer *)gesture {
+    
+    switch (gesture.state) {
+        case UIGestureRecognizerStateBegan: {
+            self.scrollCount++;
+            [self _handleScrolling];
+        }
+        case UIGestureRecognizerStateEnded: {
+            [self _handleScrollingEnded];
+            self.scrollCount = 0;
+        }
+        default: {
+            self.scrollCount++;
+            [self _handleScrolling];
+            
+        }
+    }
 }
 
 @end
