@@ -257,6 +257,10 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)layoutViews
 {
+    if([self isFrozen]) {
+        return;
+    }
+    
     [self.navBarController expand];
     [self.extensionViewContainer.superview bringSubviewToFront:self.extensionViewContainer];
         
