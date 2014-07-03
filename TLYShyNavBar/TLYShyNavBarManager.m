@@ -45,6 +45,9 @@ static inline CGFloat AACStatusBarHeight()
 @property (nonatomic, getter = isViewControllerVisible) BOOL viewControllerVisible;
 @property (nonatomic) BOOL previousContractionState;
 
+@property (nonatomic) NSInteger scrollCount;
+@property (nonatomic) BOOL decelerating;
+
 @end
 
 @implementation TLYShyNavBarManager
@@ -143,7 +146,10 @@ static inline CGFloat AACStatusBarHeight()
     {
         self.delegateProxy.originalDelegate = _scrollView.delegate;
         _scrollView.delegate = (id)self.delegateProxy;
-    }}
+    }
+    
+    [_scrollView.panGestureRecognizer addTarget:self action:@selector(gestureRecognizerUpdate:)];
+}
 
 - (CGRect)extensionViewBounds
 {
@@ -266,6 +272,10 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)layoutViews
 {
+    if(self.scrollCount == 1) {
+        return;
+    }
+    
     UIEdgeInsets scrollInsets = self.scrollView.contentInset;
     scrollInsets.top = CGRectGetHeight(self.extensionViewContainer.bounds) + self.viewController.tly_topLayoutGuide.length;
     
@@ -296,22 +306,43 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    [self _handleScrolling];
+    if(self.decelerating) {
+        [self _handleScrolling];
+    }
+    
+    if(self.scrollView.contentOffset.y <= 0) {
+        [self _handleScrolling];
+    }
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-    if (!decelerate)
-    {
-        [self _handleScrollingEnded];
-    }
+    self.decelerating = decelerate;
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-    [self _handleScrollingEnded];
+    self.decelerating = NO;
 }
 
+-(void)gestureRecognizerUpdate:(UIPanGestureRecognizer *)gesture {
+    
+    switch (gesture.state) {
+        case UIGestureRecognizerStateBegan: {
+            self.scrollCount++;
+            [self _handleScrolling];
+        }
+        case UIGestureRecognizerStateEnded: {
+            [self _handleScrollingEnded];
+            self.scrollCount = 0;
+        }
+        default: {
+            self.scrollCount++;
+            [self _handleScrolling];
+            
+        }
+    }
+}
 @end
 
 #pragma mark - UIViewController+TLYShyNavBar category
