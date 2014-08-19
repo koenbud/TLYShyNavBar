@@ -13,6 +13,9 @@
 + ~~Fix orientation problems~~
 + ~~Don't end scrolling while the scrollView is decelerating. (isTracking property in gesture recognizer?)~~
 + ~~Write proper readme file~~
++ Explore checking view visibility through `view.window`
++ Need to add more test cases for the demo project
++ Support for opaque navigation bars
 
 ## Good to Have
 

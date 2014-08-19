@@ -47,6 +47,12 @@
 @property (nonatomic) CGFloat expansionResistance;      // default 200
 @property (nonatomic) CGFloat contractionResistance;    // default 0
 
+/* Recalculate the scrollView contentInset as well as the extension
+ * view container. Useful when you're changing the extentionView's
+ * bounds.
+ */
+- (void)layoutViews;
+
 @end
 
 

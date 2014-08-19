@@ -38,6 +38,7 @@ static inline CGFloat AACStatusBarHeight()
 @property (nonatomic, strong) UIView *extensionViewContainer;
 
 @property (nonatomic) UIEdgeInsets previousScrollInsets;
+@property (nonatomic) CGRect previousExtensionViewBounds;
 @property (nonatomic) CGFloat previousYOffset;
 @property (nonatomic) CGFloat resistanceConsumed;
 
@@ -65,6 +66,7 @@ static inline CGFloat AACStatusBarHeight()
         self.contractionResistance = 0.f;
         
         self.previousScrollInsets = UIEdgeInsetsZero;
+        self.previousExtensionViewBounds = CGRectNull;
         self.previousYOffset = NAN;
         
         self.navBarController = [[TLYShyViewController alloc] init];
@@ -81,6 +83,7 @@ static inline CGFloat AACStatusBarHeight()
         };
         
         self.extensionViewContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100.f, 0.f)];
+        self.extensionViewContainer.autoresizesSubviews = NO;
         self.extensionViewContainer.backgroundColor = [UIColor clearColor];
         self.extensionViewContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleBottomMargin;
         
@@ -259,13 +262,6 @@ static inline CGFloat AACStatusBarHeight()
     {
         [_extensionView removeFromSuperview];
         _extensionView = view;
-        
-        CGRect bounds = view.frame;
-        bounds.origin = CGPointZero;
-        
-        view.frame = bounds;
-        
-        self.extensionViewContainer.frame = bounds;
         [self.extensionViewContainer addSubview:view];
         
         [self layoutViews];
@@ -279,21 +275,32 @@ static inline CGFloat AACStatusBarHeight()
 
 - (void)layoutViews
 {
+    if (!CGRectEqualToRect(self.previousExtensionViewBounds, self.extensionView.bounds))
+    {
+        self.previousExtensionViewBounds = self.extensionView.bounds;
+        
+        CGRect bounds = self.extensionView.frame;
+        bounds.origin = CGPointZero;
+        
+        self.extensionView.frame = bounds;
+        self.extensionViewContainer.frame = bounds;
+        
+        [self.navBarController expand];
+    }
+    
     UIEdgeInsets scrollInsets = self.scrollView.contentInset;
     scrollInsets.top = CGRectGetHeight(self.extensionViewContainer.bounds) + self.viewController.tly_topLayoutGuide.length;
     
-    if (UIEdgeInsetsEqualToEdgeInsets(scrollInsets, self.previousScrollInsets))
+    if (!UIEdgeInsetsEqualToEdgeInsets(scrollInsets, self.previousScrollInsets))
     {
-        return;
+        self.previousScrollInsets = scrollInsets;
+        
+        [self.navBarController expand];
+        [self.extensionViewContainer.superview bringSubviewToFront:self.extensionViewContainer];
+        
+        self.scrollView.contentInset = scrollInsets;
+        self.scrollView.scrollIndicatorInsets = scrollInsets;
     }
-    
-    self.previousScrollInsets = scrollInsets;
-    
-    [self.navBarController expand];
-    [self.extensionViewContainer.superview bringSubviewToFront:self.extensionViewContainer];
-
-    self.scrollView.contentInset = scrollInsets;
-    self.scrollView.scrollIndicatorInsets = scrollInsets;
 }
 
 - (void)cleanup
