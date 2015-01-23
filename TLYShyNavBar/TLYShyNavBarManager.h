@@ -47,6 +47,10 @@
 @property (nonatomic) CGFloat expansionResistance;      // default 200
 @property (nonatomic) CGFloat contractionResistance;    // default 0
 
+/* When frozen etc...
+ */
+@property (nonatomic, getter = isFrozen, setter = setFrozen:) BOOL frozen;
+
 /* Recalculate the scrollView contentInset as well as the extension
  * view container. Useful when you're changing the extentionView's
  * bounds.

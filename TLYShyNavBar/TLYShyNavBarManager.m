@@ -26,6 +26,11 @@ static inline CGFloat AACStatusBarHeight()
     return MIN(statusBarSize.width, statusBarSize.height);
 }
 
+static inline CGFloat StatusBarHeightAdjustment()
+{
+    return AACStatusBarHeight() - 20;
+}
+
 #pragma mark - TLYShyNavBarManager class
 
 @interface TLYShyNavBarManager () <UIScrollViewDelegate>
@@ -51,7 +56,6 @@ static inline CGFloat AACStatusBarHeight()
 @implementation TLYShyNavBarManager
 
 #pragma mark - Init & Dealloc
-
 - (instancetype)init
 {
     self = [super init];
@@ -74,7 +78,7 @@ static inline CGFloat AACStatusBarHeight()
         self.navBarController.expandedCenter = ^(UIView *view)
         {
             return CGPointMake(CGRectGetMidX(view.bounds),
-                               CGRectGetMidY(view.bounds) + AACStatusBarHeight());
+                               CGRectGetMidY(view.bounds) + AACStatusBarHeight() - StatusBarHeightAdjustment());
         };
         
         self.navBarController.contractionAmount = ^(UIView *view)
@@ -105,6 +109,8 @@ static inline CGFloat AACStatusBarHeight()
         self.navBarController.child = self.extensionController;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillChangeStatusBar:) name:UIApplicationWillChangeStatusBarFrameNotification object:nil];
     }
     return self;
 }
@@ -117,6 +123,8 @@ static inline CGFloat AACStatusBarHeight()
         _scrollView.delegate = _delegateProxy.originalDelegate;
     }
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillChangeStatusBarFrameNotification object:nil];
 }
 
 #pragma mark - Properties
@@ -169,7 +177,11 @@ static inline CGFloat AACStatusBarHeight()
     CGFloat scrollableAmount = self.scrollView.contentSize.height - CGRectGetHeight(scrollFrame);
     BOOL scrollViewIsSuffecientlyLong = (scrollableAmount > self.navBarController.totalHeight);
     
-    return (self.isViewControllerVisible && scrollViewIsSuffecientlyLong);
+    if(self.frozen) {
+        NSLog(@" ** FROZEN");
+    }
+    
+    return (self.isViewControllerVisible && scrollViewIsSuffecientlyLong && !self.isFrozen);
 }
 
 - (void)_handleScrolling
@@ -219,7 +231,7 @@ static inline CGFloat AACStatusBarHeight()
 
             deltaY = MIN(0, availableResistance + deltaY);
         }
-        else if (self.scrollView.contentOffset.y > -AACStatusBarHeight())
+        else if (self.scrollView.contentOffset.y > -AACStatusBarHeight() + StatusBarHeightAdjustment())
         {
             CGFloat availableResistance = self.expansionResistance - self.resistanceConsumed;
             self.resistanceConsumed = MIN(self.expansionResistance, self.resistanceConsumed + deltaY);
@@ -334,6 +346,12 @@ static inline CGFloat AACStatusBarHeight()
 #pragma mark - Application did become active method
 
 - (void)applicationDidBecomeActive
+{
+    [self.navBarController expand];
+}
+
+#pragma mark - Application will change status bar method
+- (void)applicationWillChangeStatusBar:(NSNotification*)note
 {
     [self.navBarController expand];
 }

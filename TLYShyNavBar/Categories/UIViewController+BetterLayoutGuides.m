@@ -7,6 +7,8 @@
 //
 
 #import "UIViewController+BetterLayoutGuides.h"
+#import <UIKit/UIKit.h>
+
 
 @implementation UIViewController (BetterLayoutGuides)
 

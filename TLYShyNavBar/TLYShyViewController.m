@@ -148,7 +148,7 @@ const CGFloat contractionVelocity = 300.f;
     }
     
     CGFloat amountToMove = self.expandedCenterValue.y - self.view.center.y;
-
+    
     self.view.center = self.expandedCenterValue;
     [self.child expand];
     
@@ -158,7 +158,7 @@ const CGFloat contractionVelocity = 300.f;
 - (CGFloat)contract
 {
     CGFloat amountToMove = self.contractedCenterValue.y - self.view.center.y;
-
+    
     self.view.center = self.contractedCenterValue;
     [self.child contract];
     
